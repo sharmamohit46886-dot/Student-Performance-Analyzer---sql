@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Student Performance Analyzer</title>
+<style>
+:root{--bg:#f3f5f9;--card:#fff;--ink:#1b2430;--mut:#667085;--line:#e1e6ee;--pri:#1f4e9c;--priink:#fff;
+--okbg:#e6f5ec;--ok:#16783f;--badbg:#fdeaea;--bad:#b42318;--warnbg:#fff4dc;--warn:#9a6700;--code:#10151c;--codeink:#d8e1ee}
+@media (prefers-color-scheme:dark){:root{--bg:#0f141b;--card:#171e28;--ink:#e8edf4;--mut:#9aa6b8;--line:#2a3442;--pri:#6ea0ff;--priink:#0b1220;
+--okbg:#112e1d;--ok:#6ee7a0;--badbg:#3a1717;--bad:#ff9b94;--warnbg:#33290e;--warn:#f5c451;--code:#0a0e13;--codeink:#cfe0f5}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.45}
+header{background:var(--card);border-bottom:1px solid var(--line);padding:16px 24px}
+header h1{margin:0;font-size:1.3rem}
+header p{margin:2px 0 0;color:var(--mut);font-size:.88rem}
+nav{display:flex;flex-wrap:wrap;gap:6px;padding:12px 24px;max-width:1040px;margin:0 auto}
+nav button{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 16px;border-radius:20px;cursor:pointer;font-size:.92rem}
+nav button.on{background:var(--pri);color:var(--priink);border-color:var(--pri);font-weight:600}
+main{max-width:1040px;margin:0 auto;padding:4px 24px 40px}
+.panel{display:none}.panel.on{display:block}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.stat b{display:block;font-size:1.6rem}.stat span{color:var(--mut);font-size:.82rem}
+.wrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;min-width:520px}
+th,td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--line);font-size:.93rem}
+th{font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+tr:last-child td{border-bottom:0}
+.num{text-align:right}
+tr.row{cursor:pointer}tr.row:hover td{background:var(--bg)}
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.8rem;font-weight:700}
+.pass{background:var(--okbg);color:var(--ok)}.fail{background:var(--badbg);color:var(--bad)}
+.grade{background:var(--warnbg);color:var(--warn)}
+.detail td{background:var(--bg);padding:12px 18px}
+.sub{display:grid;grid-template-columns:150px 1fr 70px;gap:10px;align-items:center;margin:4px 0;font-size:.88rem}
+.bar{height:10px;background:var(--line);border-radius:6px;overflow:hidden;position:relative}
+.bar i{display:block;height:100%;background:var(--ok)}.bar i.low{background:var(--bad)}
+.forms{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:16px}
+form{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
+form h3{margin:0 0 10px;font-size:1rem}
+label{display:block;font-size:.84rem;color:var(--mut);margin-bottom:10px}
+input,select,textarea{display:block;width:100%;margin-top:4px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit}
+button.act{padding:8px 18px;border:0;border-radius:6px;background:var(--pri);color:var(--priink);font-weight:600;cursor:pointer}
+button.ghost{padding:8px 16px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);cursor:pointer}
+button.del{border:0;background:none;color:var(--bad);cursor:pointer;font-size:.85rem}
+pre{background:var(--code);color:var(--codeink);padding:16px;border-radius:10px;overflow:auto;font:13px/1.55 "Cascadia Mono",Consolas,monospace;margin:12px 0 0;max-height:480px}
+textarea{font:13px/1.5 Consolas,monospace;min-height:320px;background:var(--code);color:var(--codeink)}
+.msg{padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:.9rem;display:none}
+.msg.ok{display:block;background:var(--okbg);color:var(--ok)}.msg.err{display:block;background:var(--badbg);color:var(--bad)}
+.bar-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.note{color:var(--mut);font-size:.82rem;margin-top:10px}
+h2{font-size:1.1rem;margin:8px 0 12px}
+button.edit{border:0;background:none;color:var(--pri);cursor:pointer;font-size:.85rem;margin-right:8px}
+.acts{white-space:nowrap;text-align:right}
+.form-actions{display:flex;gap:8px;flex-wrap:wrap}
+form.editing{border-color:var(--pri);box-shadow:0 0 0 2px var(--pri) inset}
+.tag{display:inline-block;font-size:.7rem;font-weight:700;padding:1px 8px;border-radius:10px;background:var(--warnbg);color:var(--warn);margin-left:6px;vertical-align:middle}
+.empty{color:var(--mut);padding:14px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Student Performance Analyzer</h1>
+  <p>Front end for the Oracle SQL and PL/SQL project (STUDENTS, SUBJECTS, MARKS) with full CRUD</p>
+</header>
+<nav id="tabs">
+  <button data-tab="report" class="on">Report</button>
+  <button data-tab="students">Students</button>
+  <button data-tab="subjects">Subjects</button>
+  <button data-tab="marks">Marks</button>
+  <button data-tab="output">DBMS_OUTPUT</button>
+  <button data-tab="log">CRUD SQL Log</button>
+  <button data-tab="sql">SQL Export</button>
+</nav>
+<main>
+  <div id="msg" class="msg"></div>
+
+  <section id="report" class="panel on">
+    <div class="stats" id="stats"></div>
+    <div class="wrap"><table>
+      <thead><tr><th>Student</th><th class="num">Total</th><th class="num">Percentage</th><th>Grade</th><th>Result</th></tr></thead>
+      <tbody id="reportBody"></tbody>
+    </table></div>
+    <p class="note">Click a student to see the subject-wise marks. A student passes only if every subject is at or above its pass marks.</p>
+  </section>
+
+  <section id="students" class="panel">
+    <h2>STUDENTS table</h2>
+    <div class="forms" style="margin:0 0 12px"><label style="margin:0;grid-column:1/-1">Search by name or course<input id="searchStudents" placeholder="Type to filter (READ with LIKE)"></label></div>
+    <div class="wrap"><table><thead><tr><th>STUDENT_ID</th><th>STUDENT_NAME</th><th>COURSE</th><th>SEMESTER</th><th></th></tr></thead><tbody id="studentsBody"></tbody></table></div>
+    <div class="forms"><form id="studentForm">
+      <h3 id="studentTitle">Add student</h3>
+      <input type="hidden" name="id">
+      <label>Name<input name="name" maxlength="50" required></label>
+      <label>Course<input name="course" maxlength="30" value="MCA" required></label>
+      <label>Semester<input name="sem" type="number" min="1" max="12" value="1" required></label>
+      <div class="form-actions"><button class="act" type="submit" id="studentBtn">Add student</button><button class="ghost" type="button" id="studentCancel" hidden>Cancel</button></div>
+    </form></div>
+  </section>
+
+  <section id="subjects" class="panel">
+    <h2>SUBJECTS table</h2>
+    <div class="wrap"><table><thead><tr><th>SUBJECT_ID</th><th>SUBJECT_NAME</th><th class="num">MAX_MARKS</th><th class="num">PASS_MARKS</th><th></th></tr></thead><tbody id="subjectsBody"></tbody></table></div>
+    <div class="forms"><form id="subjectForm">
+      <h3 id="subjectTitle">Add subject</h3>
+      <input type="hidden" name="id">
+      <label>Subject name<input name="name" maxlength="50" required></label>
+      <label>Maximum marks<input name="max" type="number" min="1" value="100" required></label>
+      <label>Pass marks<input name="pass" type="number" min="0" value="40" required></label>
+      <div class="form-actions"><button class="act" type="submit" id="subjectBtn">Add subject</button><button class="ghost" type="button" id="subjectCancel" hidden>Cancel</button></div>
+    </form></div>
+  </section>
+
+  <section id="marks" class="panel">
+    <h2>MARKS table</h2>
+    <div class="wrap"><table><thead><tr><th>MARK_ID</th><th>Student</th><th>Subject</th><th class="num">OBTAINED</th><th class="num">MAX</th><th></th></tr></thead><tbody id="marksBody"></tbody></table></div>
+    <div class="forms"><form id="markForm">
+      <h3 id="markTitle">Add or update marks</h3>
+      <label>Student<select name="student" id="selStudent"></select></label>
+      <label>Subject<select name="subject" id="selSubject"></select></label>
+      <label>Obtained marks<input name="marks" type="number" min="0" step="1" required></label>
+      <div class="form-actions"><button class="act" type="submit">Save marks</button><button class="ghost" type="button" id="markCancel" hidden>Cancel</button></div>
+      <p class="note">Marks must be between 0 and the subject's maximum. If the student already has marks for the subject, they are updated (same as STUDENT_CRUD.SAVE_MARKS).</p>
+    </form></div>
+  </section>
+
+  <section id="output" class="panel">
+    <h2>Output of ANALYZE_PERFORMANCE</h2>
+    <div class="bar-actions"><button class="act" id="runBtn">Run ANALYZE_PERFORMANCE</button></div>
+    <pre id="outPre">Click "Run ANALYZE_PERFORMANCE".</pre>
+  </section>
+
+  <section id="log" class="panel">
+    <h2>SQL for every Create, Update and Delete you make</h2>
+    <p class="note" style="margin-top:0">Each action in this app is written here as the Oracle statement that does the same thing. Run them in order in Oracle after <b>student_performance_analyzer.sql</b> to repeat your changes.</p>
+    <div class="bar-actions"><button class="act" id="logCopy">Copy log</button><button class="ghost" id="logClear">Clear log</button></div>
+    <pre id="logPre"></pre>
+  </section>
+
+  <section id="sql" class="panel">
+    <h2>SQL for the current data</h2>
+    <p class="note" style="margin-top:0">INSERT statements for everything you see here. Paste them into Oracle after the CREATE TABLE statements in <b>student_performance_analyzer.sql</b>.</p>
+    <div class="bar-actions"><button class="act" id="copyBtn">Copy SQL</button><button class="ghost" id="resetBtn">Reset to sample data</button></div>
+    <textarea id="sqlBox" readonly></textarea>
+  </section>
+</main>
+
+<script>
+"use strict";
+var SAMPLE = {
+  students: [[1,"Mohit","MCA",1],[2,"Rahul","MCA",1],[3,"Aman","MCA",1],[4,"Priya","MCA",1]],
+  subjects: [[101,"DBMS",100,40],[102,"Python",100,40],[103,"Web Programming",100,40],[104,"Computer Networks",100,40]],
+  marks: [[1,1,101,85],[2,1,102,90],[3,1,103,78],[4,1,104,88],[5,2,101,65],[6,2,102,70],[7,2,103,75],[8,2,104,68],
+          [9,3,101,35],[10,3,102,55],[11,3,103,60],[12,3,104,45],[13,4,101,95],[14,4,102,92],[15,4,103,89],[16,4,104,96]],
+  seq: {student: 5, subject: 105, mark: 17},
+  log: []
+};
+var KEY = "student_performance_analyzer_v2";
+var db;
+
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function load(){
+  try {
+    var s = localStorage.getItem(KEY);
+    if (s) { var d = JSON.parse(s); if (d.students && d.subjects && d.marks) { d.seq = d.seq || clone(SAMPLE.seq); d.log = d.log || []; return d; } }
+  } catch(e){}
+  return clone(SAMPLE);
+}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(db)); } catch(e){} }
+function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function sqlStr(s){ return "'" + String(s).replace(/'/g, "''") + "'"; }
+function nextSeq(name){ var v = db.seq[name]; db.seq[name] = v + 1; return v; }   // like SEQ_xxx.NEXTVAL
+function logSql(text){
+  var t = new Date().toTimeString().slice(0, 8);
+  db.log.push("-- " + t + "\n" + text);
+  if (db.log.length > 200) db.log.shift();
+}
+function findRow(rows, id){ return rows.filter(function(r){ return r[0] === id; })[0]; }
+
+/* ---- Same logic as the PL/SQL code ---- */
+function calculateGrade(p){            // CALCULATE_GRADE
+  if (p >= 90) return "A+";
+  if (p >= 80) return "A";
+  if (p >= 70) return "B";
+  if (p >= 60) return "C";
+  if (p >= 40) return "D";
+  return "F";
+}
+function round2(x){ return Math.round((x + Number.EPSILON) * 100) / 100; }
+function analyze(){                    // ANALYZE_PERFORMANCE
+  var subj = {}; db.subjects.forEach(function(s){ subj[s[0]] = s; });
+  return db.students.slice().sort(function(a,b){return a[0]-b[0];}).map(function(st){
+    var rows = db.marks.filter(function(m){ return m[1] === st[0] && subj[m[2]]; });
+    var total = 0, max = 0, passAll = true, details = [];
+    rows.forEach(function(m){
+      var su = subj[m[2]]; total += m[3]; max += su[2];
+      var ok = m[3] >= su[3]; if (!ok) passAll = false;
+      details.push({name: su[1], got: m[3], max: su[2], pass: su[3], ok: ok});
+    });
+    if (!max) return {id: st[0], name: st[1], none: true, details: details};
+    var pct = (total / max) * 100;
+    return {id: st[0], name: st[1], total: total, max: max, pct: pct, pct2: round2(pct),
+            grade: calculateGrade(pct), result: passAll ? "PASS" : "FAIL", details: details};
+  });
+}
+function dbmsOutput(){
+  var out = [];
+  analyze().forEach(function(r){
+    if (r.none) { out.push("No marks found for " + r.name); return; }
+    out.push("-----------------------------");
+    out.push("Student Name: " + r.name);
+    out.push("Total Marks: " + r.total + "/" + r.max);
+    out.push("Percentage: " + r.pct2 + "%");
+    out.push("Grade: " + r.grade);
+    out.push("Result: " + r.result);
+  });
+  return out.join("\n");
+}
+
+/* ---- Rendering ---- */
+function $(id){ return document.getElementById(id); }
+function flash(text, ok){
+  var m = $("msg"); m.textContent = text; m.className = "msg " + (ok ? "ok" : "err");
+  clearTimeout(flash.t); flash.t = setTimeout(function(){ m.className = "msg"; }, 4000);
+}
+function renderReport(){
+  var rs = analyze(), done = rs.filter(function(r){return !r.none;});
+  var passN = done.filter(function(r){return r.result === "PASS";}).length;
+  var avg = done.length ? round2(done.reduce(function(a,r){return a + r.pct;}, 0) / done.length) : 0;
+  $("stats").innerHTML =
+    '<div class="stat"><b>' + db.students.length + '</b><span>Students</span></div>' +
+    '<div class="stat"><b>' + passN + '</b><span>Passed</span></div>' +
+    '<div class="stat"><b>' + (done.length - passN) + '</b><span>Failed</span></div>' +
+    '<div class="stat"><b>' + avg.toFixed(2) + '%</b><span>Class average</span></div>';
+  if (!rs.length) { $("reportBody").innerHTML = '<tr><td colspan="5" class="empty">No students yet. Add one in the Students tab.</td></tr>'; return; }
+  var open = {};
+  [].forEach.call(document.querySelectorAll("tr.detail:not([hidden])"), function(r){ open[r.id] = true; });
+  $("reportBody").innerHTML = rs.map(function(r){
+    if (r.none) return '<tr><td>' + esc(r.name) + '</td><td colspan="4" style="color:var(--mut)">No marks found</td></tr>';
+    var det = r.details.map(function(d){
+      var w = d.max ? Math.min(100, d.got / d.max * 100) : 0;
+      return '<div class="sub"><span>' + esc(d.name) + '</span><div class="bar"><i class="' + (d.ok ? "" : "low") + '" style="width:' + w + '%"></i></div><span class="num">' + d.got + '/' + d.max + '</span></div>';
+    }).join("");
+    return '<tr class="row" data-id="' + r.id + '"><td><b>' + esc(r.name) + '</b></td><td class="num">' + r.total + '/' + r.max + '</td><td class="num">' + r.pct2.toFixed(2) + '%</td>' +
+      '<td><span class="badge grade">' + r.grade + '</span></td><td><span class="badge ' + r.result.toLowerCase() + '">' + r.result + '</span></td></tr>' +
+      '<tr class="detail" id="d' + r.id + '"' + (open["d" + r.id] ? "" : " hidden") + '><td colspan="5">' + det + '</td></tr>';
+  }).join("");
+}
+function renderTables(){
+  var q = $("searchStudents").value.trim().toLowerCase();
+  var list = db.students.filter(function(s){ return !q || s[1].toLowerCase().indexOf(q) >= 0 || s[2].toLowerCase().indexOf(q) >= 0; });
+  $("studentsBody").innerHTML = list.length ? list.map(function(s){
+    return '<tr><td>' + s[0] + '</td><td>' + esc(s[1]) + '</td><td>' + esc(s[2]) + '</td><td>' + s[3] + '</td>' +
+      '<td class="acts"><button class="edit" data-edit-student="' + s[0] + '">Edit</button><button class="del" data-del-student="' + s[0] + '">Delete</button></td></tr>';
+  }).join("") : '<tr><td colspan="5" class="empty">No students found.</td></tr>';
+
+  $("subjectsBody").innerHTML = db.subjects.length ? db.subjects.map(function(s){
+    return '<tr><td>' + s[0] + '</td><td>' + esc(s[1]) + '</td><td class="num">' + s[2] + '</td><td class="num">' + s[3] + '</td>' +
+      '<td class="acts"><button class="edit" data-edit-subject="' + s[0] + '">Edit</button><button class="del" data-del-subject="' + s[0] + '">Delete</button></td></tr>';
+  }).join("") : '<tr><td colspan="5" class="empty">No subjects yet.</td></tr>';
+
+  var sn = {}, su = {};
+  db.students.forEach(function(s){ sn[s[0]] = s[1]; }); db.subjects.forEach(function(s){ su[s[0]] = s; });
+  $("marksBody").innerHTML = db.marks.length ? db.marks.slice().sort(function(a,b){ return a[1]-b[1] || a[2]-b[2]; }).map(function(m){
+    var s = su[m[2]] || [0,"?",0,0];
+    return '<tr><td>' + m[0] + '</td><td>' + esc(sn[m[1]] || "?") + '</td><td>' + esc(s[1]) + '</td><td class="num">' + m[3] + '</td><td class="num">' + s[2] + '</td>' +
+      '<td class="acts"><button class="edit" data-edit-mark="' + m[0] + '">Edit</button><button class="del" data-del="' + m[0] + '">Delete</button></td></tr>';
+  }).join("") : '<tr><td colspan="6" class="empty">No marks yet.</td></tr>';
+
+  var ss = $("selStudent").value, sj = $("selSubject").value;
+  $("selStudent").innerHTML = db.students.map(function(s){ return '<option value="' + s[0] + '">' + esc(s[1]) + '</option>'; }).join("");
+  $("selSubject").innerHTML = db.subjects.map(function(s){ return '<option value="' + s[0] + '">' + esc(s[1]) + ' (max ' + s[2] + ')</option>'; }).join("");
+  if (ss) $("selStudent").value = ss; if (sj) $("selSubject").value = sj;
+}
+function exportSql(){
+  var L = ["-- Data exported from the Student Performance Analyzer front end", ""];
+  db.students.forEach(function(s){ L.push("INSERT INTO STUDENTS VALUES (" + s[0] + ", " + sqlStr(s[1]) + ", " + sqlStr(s[2]) + ", " + s[3] + ");"); });
+  L.push("");
+  db.subjects.forEach(function(s){ L.push("INSERT INTO SUBJECTS VALUES (" + s[0] + ", " + sqlStr(s[1]) + ", " + s[2] + ", " + s[3] + ");"); });
+  L.push("");
+  db.marks.forEach(function(m){ L.push("INSERT INTO MARKS VALUES (" + m.join(", ") + ");"); });
+  L.push("", "COMMIT;");
+  return L.join("\n");
+}
+function renderLog(){
+  $("logPre").textContent = db.log.length ? db.log.join("\n\n") + "\n\nCOMMIT;" : "No changes yet. Add, edit or delete something and the SQL appears here.";
+}
+function refresh(){ save(); renderReport(); renderTables(); renderLog(); $("sqlBox").value = exportSql(); $("outPre").textContent = dbmsOutput(); }
+
+/* ---- Form modes (add / edit) ---- */
+function resetStudentForm(){
+  var f = $("studentForm"); f.elements["id"].value = ""; f.elements["name"].value = ""; f.elements["course"].value = "MCA"; f.elements["sem"].value = 1;
+  f.classList.remove("editing"); $("studentTitle").textContent = "Add student"; $("studentBtn").textContent = "Add student"; $("studentCancel").hidden = true;
+}
+function resetSubjectForm(){
+  var f = $("subjectForm"); f.elements["id"].value = ""; f.elements["name"].value = ""; f.elements["max"].value = 100; f.elements["pass"].value = 40;
+  f.classList.remove("editing"); $("subjectTitle").textContent = "Add subject"; $("subjectBtn").textContent = "Add subject"; $("subjectCancel").hidden = true;
+}
+function resetMarkForm(){
+  var f = $("markForm"); f.elements["marks"].value = ""; f.classList.remove("editing");
+  $("markTitle").textContent = "Add or update marks"; $("markCancel").hidden = true;
+  $("selStudent").disabled = false; $("selSubject").disabled = false;
+}
+
+/* ---- Events ---- */
+$("tabs").addEventListener("click", function(e){
+  var t = e.target.getAttribute("data-tab"); if (!t) return;
+  [].forEach.call(document.querySelectorAll("nav button"), function(b){ b.classList.toggle("on", b === e.target); });
+  [].forEach.call(document.querySelectorAll(".panel"), function(p){ p.classList.toggle("on", p.id === t); });
+});
+$("reportBody").addEventListener("click", function(e){
+  var tr = e.target.closest("tr.row"); if (!tr) return;
+  var d = $("d" + tr.getAttribute("data-id")); d.hidden = !d.hidden;
+});
+$("searchStudents").addEventListener("input", renderTables);
+
+/* STUDENTS: create / update / delete */
+$("studentForm").addEventListener("submit", function(e){
+  e.preventDefault(); var f = e.target;
+  var name = f.elements["name"].value.trim(), course = f.elements["course"].value.trim(), sem = Number(f.elements["sem"].value), id = f.elements["id"].value;
+  if (!name || !course) return flash("Enter a name and a course.", false);
+  if (!Number.isInteger(sem) || sem < 1 || sem > 12) return flash("Semester must be between 1 and 12.", false);
+  if (id) {
+    var row = findRow(db.students, Number(id)); if (!row) return flash("Student not found.", false);
+    row[1] = name; row[2] = course; row[3] = sem;
+    logSql("UPDATE STUDENTS SET STUDENT_NAME = " + sqlStr(name) + ", COURSE = " + sqlStr(course) + ", SEMESTER = " + sem + " WHERE STUDENT_ID = " + id + ";");
+    resetStudentForm(); refresh(); flash("Student updated.", true);
+  } else {
+    var nid = nextSeq("student");
+    db.students.push([nid, name, course, sem]);
+    logSql("INSERT INTO STUDENTS VALUES (" + nid + ", " + sqlStr(name) + ", " + sqlStr(course) + ", " + sem + ");");
+    resetStudentForm(); refresh(); flash("Student added.", true);
+  }
+});
+$("studentCancel").addEventListener("click", resetStudentForm);
+$("studentsBody").addEventListener("click", function(e){
+  var ed = e.target.getAttribute("data-edit-student"), dl = e.target.getAttribute("data-del-student");
+  if (ed) {
+    var s = findRow(db.students, Number(ed)); if (!s) return; var f = $("studentForm");
+    f.elements["id"].value = s[0]; f.elements["name"].value = s[1]; f.elements["course"].value = s[2]; f.elements["sem"].value = s[3];
+    f.classList.add("editing"); $("studentTitle").innerHTML = 'Edit student <span class="tag">ID ' + s[0] + '</span>';
+    $("studentBtn").textContent = "Update student"; $("studentCancel").hidden = false; f.elements["name"].focus();
+  } else if (dl) {
+    var id = Number(dl), st = findRow(db.students, id); if (!st) return;
+    var n = db.marks.filter(function(m){ return m[1] === id; }).length;
+    if (!confirm("Delete " + st[1] + (n ? " and their " + n + " marks entr" + (n === 1 ? "y" : "ies") : "") + "?")) return;
+    db.students = db.students.filter(function(s){ return s[0] !== id; });
+    db.marks = db.marks.filter(function(m){ return m[1] !== id; });          // ON DELETE CASCADE
+    logSql("DELETE FROM MARKS WHERE STUDENT_ID = " + id + ";\nDELETE FROM STUDENTS WHERE STUDENT_ID = " + id + ";");
+    if (Number($("studentForm").elements["id"].value) === id) resetStudentForm();
+    refresh(); flash("Student deleted.", true);
+  }
+});
+
+/* SUBJECTS: create / update / delete */
+$("subjectForm").addEventListener("submit", function(e){
+  e.preventDefault(); var f = e.target;
+  var name = f.elements["name"].value.trim(), mx = Number(f.elements["max"].value), ps = Number(f.elements["pass"].value), id = f.elements["id"].value;
+  if (!name) return flash("Enter a subject name.", false);
+  if (!(mx > 0) || !(ps >= 0)) return flash("Maximum marks must be above 0 and pass marks cannot be negative.", false);
+  if (ps > mx) return flash("Pass marks cannot be more than maximum marks.", false);
+  if (id) {
+    var sid = Number(id), row = findRow(db.subjects, sid); if (!row) return flash("Subject not found.", false);
+    if (db.marks.some(function(m){ return m[2] === sid && m[3] > mx; })) return flash("Some saved marks are higher than " + mx + ". Lower those marks first.", false);
+    row[1] = name; row[2] = mx; row[3] = ps;
+    logSql("UPDATE SUBJECTS SET SUBJECT_NAME = " + sqlStr(name) + ", MAX_MARKS = " + mx + ", PASS_MARKS = " + ps + " WHERE SUBJECT_ID = " + sid + ";");
+    resetSubjectForm(); refresh(); flash("Subject updated.", true);
+  } else {
+    var nid = nextSeq("subject");
+    db.subjects.push([nid, name, mx, ps]);
+    logSql("INSERT INTO SUBJECTS VALUES (" + nid + ", " + sqlStr(name) + ", " + mx + ", " + ps + ");");
+    resetSubjectForm(); refresh(); flash("Subject added.", true);
+  }
+});
+$("subjectCancel").addEventListener("click", resetSubjectForm);
+$("subjectsBody").addEventListener("click", function(e){
+  var ed = e.target.getAttribute("data-edit-subject"), dl = e.target.getAttribute("data-del-subject");
+  if (ed) {
+    var s = findRow(db.subjects, Number(ed)); if (!s) return; var f = $("subjectForm");
+    f.elements["id"].value = s[0]; f.elements["name"].value = s[1]; f.elements["max"].value = s[2]; f.elements["pass"].value = s[3];
+    f.classList.add("editing"); $("subjectTitle").innerHTML = 'Edit subject <span class="tag">ID ' + s[0] + '</span>';
+    $("subjectBtn").textContent = "Update subject"; $("subjectCancel").hidden = false; f.elements["name"].focus();
+  } else if (dl) {
+    var id = Number(dl), su = findRow(db.subjects, id); if (!su) return;
+    var n = db.marks.filter(function(m){ return m[2] === id; }).length;
+    if (!confirm("Delete " + su[1] + (n ? " and its " + n + " marks entr" + (n === 1 ? "y" : "ies") : "") + "?")) return;
+    db.subjects = db.subjects.filter(function(s){ return s[0] !== id; });
+    db.marks = db.marks.filter(function(m){ return m[2] !== id; });          // ON DELETE CASCADE
+    logSql("DELETE FROM MARKS WHERE SUBJECT_ID = " + id + ";\nDELETE FROM SUBJECTS WHERE SUBJECT_ID = " + id + ";");
+    if (Number($("subjectForm").elements["id"].value) === id) resetSubjectForm();
+    refresh(); flash("Subject deleted.", true);
+  }
+});
+
+/* MARKS: create / update (upsert) / delete */
+$("markForm").addEventListener("submit", function(e){
+  e.preventDefault(); var f = e.target;
+  var sid = Number(f.elements["student"].value), subId = Number(f.elements["subject"].value), val = Number(f.elements["marks"].value);
+  var su = findRow(db.subjects, subId);
+  if (!su || !findRow(db.students, sid)) return flash("Add a student and a subject first.", false);
+  if (f.elements["marks"].value === "" || !Number.isInteger(val) || val < 0 || val > su[2]) return flash("Marks must be a whole number between 0 and " + su[2] + ".", false);
+  var ex = db.marks.filter(function(m){ return m[1] === sid && m[2] === subId; })[0];
+  if (ex) {
+    ex[3] = val;
+    logSql("UPDATE MARKS SET OBTAINED_MARKS = " + val + " WHERE STUDENT_ID = " + sid + " AND SUBJECT_ID = " + subId + ";");
+  } else {
+    var nid = nextSeq("mark");
+    db.marks.push([nid, sid, subId, val]);
+    logSql("INSERT INTO MARKS VALUES (" + nid + ", " + sid + ", " + subId + ", " + val + ");");
+  }
+  resetMarkForm(); refresh(); flash(ex ? "Marks updated." : "Marks added.", true);
+});
+$("markCancel").addEventListener("click", resetMarkForm);
+$("marksBody").addEventListener("click", function(e){
+  var ed = e.target.getAttribute("data-edit-mark"), id = e.target.getAttribute("data-del");
+  if (ed) {
+    var m = findRow(db.marks, Number(ed)); if (!m) return; var f = $("markForm");
+    $("selStudent").value = m[1]; $("selSubject").value = m[2]; f.elements["marks"].value = m[3];
+    $("selStudent").disabled = true; $("selSubject").disabled = true;       // a mark row keeps its student and subject
+    f.classList.add("editing"); $("markTitle").innerHTML = 'Edit marks <span class="tag">MARK_ID ' + m[0] + '</span>';
+    $("markCancel").hidden = false; f.elements["marks"].focus();
+    f.scrollIntoView({behavior: "smooth", block: "center"});
+  } else if (id) {
+    if (!confirm("Delete this marks entry?")) return;
+    db.marks = db.marks.filter(function(m){ return String(m[0]) !== id; });
+    logSql("DELETE FROM MARKS WHERE MARK_ID = " + id + ";");
+    resetMarkForm(); refresh(); flash("Marks entry deleted.", true);
+  }
+});
+
+$("runBtn").addEventListener("click", function(){ $("outPre").textContent = dbmsOutput(); });
+function copyText(text, box){
+  function fallback(){ try { box.select(); document.execCommand("copy"); flash("Copied.", true); } catch(err){ flash("Press Ctrl+C to copy.", false); } }
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function(){ flash("Copied.", true); }, fallback); else fallback();
+}
+$("copyBtn").addEventListener("click", function(){ copyText($("sqlBox").value, $("sqlBox")); });
+$("logCopy").addEventListener("click", function(){
+  if (!db.log.length) return flash("The log is empty.", false);
+  var t = document.createElement("textarea"); t.value = db.log.join("\n\n") + "\n\nCOMMIT;"; document.body.appendChild(t);
+  copyText(t.value, t); setTimeout(function(){ document.body.removeChild(t); }, 300);
+});
+$("logClear").addEventListener("click", function(){ db.log = []; refresh(); flash("Log cleared.", true); });
+$("resetBtn").addEventListener("click", function(){
+  if (confirm("Reset all data to the original sample data?")) { db = clone(SAMPLE); resetStudentForm(); resetSubjectForm(); resetMarkForm(); refresh(); flash("Sample data restored.", true); }
+});
+
+db = load();
+refresh();
+</script>
+</body>
+</html>
